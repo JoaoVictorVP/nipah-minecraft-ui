@@ -17,9 +17,5 @@ pluginManagement {
     }
 }
 rootProject.name = 'nipah-minecraft-ui'
-include 'src:main:nipah-minecraft-ui-ksp'
-findProject(':src:main:nipah-minecraft-ui-ksp')?.name = 'nipah-minecraft-ui-ksp'
-include 'nipah-minecraft-ui-compiler'
-include 'nipah-minecraft-ui-testing'
 include 'nipah-minecraft-ui-lib'
 
