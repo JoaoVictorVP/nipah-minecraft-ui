@@ -10,7 +10,9 @@ tasks.withType(JavaCompile).configureEach {
     targetCompatibility = '18'
 }
 
-group 'org.example'
+apply plugin: 'maven-publish'
+
+group 'org.github.JoaoVictorVP'
 version '1.0-SNAPSHOT'
 
 sourceSets {
