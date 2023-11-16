@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64f5dfc9-3bcf-4fa7-b698-e8c7c3ef6d12" name="Changes" comment="configs">
+    <list default="true" id="64f5dfc9-3bcf-4fa7-b698-e8c7c3ef6d12" name="Changes" comment="removing a project">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nipah-minecraft-ui-lib/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/build.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,6 +26,19 @@
         <option value="Kotlin Interface" />
         <option value="Kotlin Class" />
       </list>
+    </option>
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings">
+    <option name="selectedUrlAndAccountId">
+      <UrlAndAccount>
+        <option name="accountId" value="d2f0b007-ae62-4f0e-a04e-9ebd32123c5d" />
+        <option name="url" value="https://github.com/JoaoVictorVP/nipah-minecraft-ui.git" />
+      </UrlAndAccount>
     </option>
   </component>
   <component name="MarkdownSettingsMigration">
@@ -126,7 +140,21 @@
       <option name="project" value="LOCAL" />
       <updated>1700098228977</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary=".">
+      <created>1700099705323</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1700099705323</updated>
+    </task>
+    <task id="LOCAL-00009" summary="removing a project">
+      <created>1700099840095</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1700099840095</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -145,10 +173,11 @@
     <MESSAGE value="first commit here" />
     <MESSAGE value="all carefully implemented until here&#10;&#10;now it starts the most abstractive parts&#10;&#10;here I go..." />
     <MESSAGE value="working!" />
-    <MESSAGE value="." />
     <MESSAGE value="Everything is working!" />
     <MESSAGE value="configs" />
-    <option name="LAST_COMMIT_MESSAGE" value="configs" />
+    <MESSAGE value="." />
+    <MESSAGE value="removing a project" />
+    <option name="LAST_COMMIT_MESSAGE" value="removing a project" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

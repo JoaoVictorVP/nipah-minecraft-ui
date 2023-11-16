@@ -6,8 +6,8 @@ plugins {
 def kspVersion = "1.9.20"
 
 tasks.withType(JavaCompile).configureEach {
-    sourceCompatibility = '18'
-    targetCompatibility = '18'
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
 }
 
 apply plugin: 'maven-publish'
