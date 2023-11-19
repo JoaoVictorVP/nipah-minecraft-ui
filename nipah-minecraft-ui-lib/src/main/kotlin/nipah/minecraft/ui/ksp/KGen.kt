@@ -299,6 +299,8 @@ class KGen {
         private var isLateInit = false
         private var isVar = false
 
+        private var isOverride = false
+
         fun private(private: Boolean = true): Field {
             isPrivate = private
             return this
@@ -315,17 +317,23 @@ class KGen {
             return this
         }
 
+        fun override(override: Boolean = true): Field {
+            isOverride = override
+            return this
+        }
+
         override fun make(): String {
             val privateModifier = if(isPrivate) "private " else ""
             val lateInitModifier = if(isLateInit) "lateinit " else ""
             val valModifier = if(isVar) "var" else "val"
+            val overrideModifier = if(isOverride) "override " else ""
 
             if(type == "") {
                 if(defaultValue.isNullOrEmpty()) throw Exception("Field $name has no type and no default value")
-                return "$privateModifier$lateInitModifier$valModifier $name = $defaultValue"
+                return "$overrideModifier$privateModifier$lateInitModifier$valModifier $name = $defaultValue"
             }
 
-            return "$privateModifier$lateInitModifier$valModifier $name: $type" + if (defaultValue != null) " = $defaultValue" else ""
+            return "$overrideModifier$privateModifier$lateInitModifier$valModifier $name: $type" + if (defaultValue != null) " = $defaultValue" else ""
         }
     }
 }

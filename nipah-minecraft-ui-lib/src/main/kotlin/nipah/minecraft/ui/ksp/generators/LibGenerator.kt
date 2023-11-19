@@ -7,18 +7,25 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import nipah.minecraft.ui.ksp.addCode
 
 class LibGenerator: Generator {
-    private val packageName: String = ""
+    private val packageName: String
+        get() = "nipah.minecraft.ui.lib"
 
     override fun run(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger): List<KSAnnotated> {
         genGUI(codeGenerator)
         genScreenWrapper(codeGenerator)
         genContainerGUI(codeGenerator)
 
+        genState(codeGenerator)
+
+        genNipahUIScreenHandler(codeGenerator)
+
         return emptyList()
     }
 
     private fun genGUI(gen: CodeGenerator) {
         gen.addCode(packageName, "GUI", /* language=kotlin */ """
+            package $packageName
+
             import net.minecraft.entity.player.PlayerEntity
             import net.minecraft.entity.player.PlayerInventory
             import net.minecraft.inventory.Inventory
@@ -33,8 +40,10 @@ class LibGenerator: Generator {
         """.trimIndent())
     }
 
-    fun genScreenWrapper(gen: CodeGenerator) {
+    private fun genScreenWrapper(gen: CodeGenerator) {
         gen.addCode(packageName, "ScreenWrapper", /* language=kotlin */ """
+            package $packageName
+
             import com.mojang.blaze3d.systems.RenderSystem
             import net.minecraft.client.MinecraftClient
             import net.minecraft.client.gui.screen.ingame.HandledScreen
@@ -52,7 +61,7 @@ class LibGenerator: Generator {
                 val title: Text,
                 val titleX: WrappedProperty<Int>,
                 val titleY: WrappedProperty<Int>,
-                val textRenderer: TextRenderer,
+                val textRenderer: WrappedProperty<TextRenderer?>,
                 
                 val drawTexture: (matrices: MatrixStack?, x: Int, y: Int, u: Int, v: Int, width: Int, height: Int) -> Unit,
                 val drawTextWithShadow: (matrices: MatrixStack, textRenderer: TextRenderer, text: Text, x: Int, y: Int, color: Int) -> Unit,
@@ -63,8 +72,10 @@ class LibGenerator: Generator {
         """.trimIndent())
     }
 
-    fun genContainerGUI(gen: CodeGenerator) {
+    private fun genContainerGUI(gen: CodeGenerator) {
         gen.addCode(packageName, "ContainerGUI", /* language=kotlin */ """
+            package $packageName
+
             import net.minecraft.inventory.Inventory
             import com.mojang.blaze3d.systems.RenderSystem
             import net.minecraft.client.MinecraftClient
@@ -78,6 +89,12 @@ class LibGenerator: Generator {
             class ContainerGUI {
                 val slots = mutableListOf<Slot>()
                 val images = mutableListOf<Image>()
+                val strings = mutableListOf<StringUI>()
+
+                fun find(name: String): UIElement? {
+                    return images.firstOrNull { it.name == name } ?:
+                        strings.firstOrNull { it.name == name }
+                }
                 
                 fun slot(inventory: Inventory, index: Int, x: Int, y: Int): Slot {
                     val slot = Slot(inventory, index, x, y)
@@ -85,10 +102,16 @@ class LibGenerator: Generator {
                     return slot
                 }
 
-                fun image(id: Identifier, x: Int, y: Int, width: Int, height: Int): Image {
-                    val image = Image(id, x, y, width, height)
+                fun image(id: Identifier, x: Int, y: Int, width: Int, height: Int, name: String = "image"): Image {
+                    val image = Image(id, x, y, width, height, name)
                     images.add(image)
                     return image
+                }
+
+                fun string(text: String, x: Int, y: Int, color: Int, name: String = "string"): StringUI {
+                    val string = StringUI(text, x, y, color, name)
+                    strings.add(string)
+                    return string
                 }
 
                 fun defaultPlayerSlots(playerInventory: PlayerInventory) {
@@ -131,16 +154,51 @@ class LibGenerator: Generator {
                             screen.drawTexture(matrices, it.x, it.y, 0, 0, it.width, it.height)
                         }
                     }
+
+                    if(matrices == null) {
+                        return
+                    }
+
+                    strings.forEach {
+                        screen.drawCenteredText(matrices, screen.textRenderer.get()!!, Text.of(it.text), it.x, it.y, it.color)
+                    }
                 }
             }
 
-            data class Image(val id: Identifier, val x: Int, val y: Int, val width: Int, val height: Int) {
+            open class UIElement(val name: String)
+
+            class Image(var id: Identifier, var x: Int, var y: Int, var width: Int, var height: Int, name: String = "image"): UIElement(name) {
                 var isBackground = false
 
                 fun background(): Image {
                     isBackground = true
                     return this
                 }
+            }
+
+            class StringUI(var text: String, var x: Int, var y: Int, var color: Int, name: String = "string"): UIElement(name)
+        """.trimIndent())
+    }
+
+    private fun genState(gen: CodeGenerator) {
+        gen.addCode(packageName, "State", /* language=kotlin */ """
+            package $packageName
+
+            interface UIState
+        """.trimIndent())
+    }
+
+    private fun genNipahUIScreenHandler(gen: CodeGenerator) {
+        gen.addCode(packageName, "NipahUIScreenHandler", /* language=kotlin */ """
+            package $packageName
+
+            import net.minecraft.screen.ScreenHandlerType
+            import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry
+
+            interface NipahUIScreenHandler {
+                val entityId: Long
+                
+                fun updateState(buf: net.minecraft.network.PacketByteBuf)
             }
         """.trimIndent())
     }

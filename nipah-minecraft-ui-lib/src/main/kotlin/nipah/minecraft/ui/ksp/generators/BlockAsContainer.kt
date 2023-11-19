@@ -8,6 +8,11 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import nipah.minecraft.ui.ksp.*
+import nipah.minecraft.ui.ksp.generators.utils.GUIEvent
+import nipah.minecraft.ui.ksp.generators.utils.GUIInfo
+import nipah.minecraft.ui.ksp.generators.utils.GUIStateInfo
+import nipah.minecraft.ui.ksp.generators.utils.parseGUIInfo
+import java.util.*
 
 /* Steps
     * Identify the block type and check the descendants
@@ -101,14 +106,19 @@ class BlockAsContainer: Generator {
                 logger.error("BlockAsContainer requires the existence of a gui class", type)
                 return@forEach
             }
+            val guiInfo = collectGUIInfo(gui, logger)
+            if(guiInfo == null) {
+                return@forEach
+            }
 
             val autoRegisterBlock = annotation.arguments.find { it.name?.asString() == "autoRegisterBlock" }?.value as? Boolean ?: true
 
             val abstractBlockName = makeAbstractBlock(resolver, codeGenerator, logger, type, autoRegisterBlock) ?: return@forEach
             makeInventory(codeGenerator, type)
-            makeBaseBlockEntity(resolver, codeGenerator, logger, type, abstractBlockName, itemCount)
-            makeScreenHandler(resolver, codeGenerator, logger, type, itemCount, guiName.asString())
-            makeScreen(resolver, codeGenerator, logger, type, guiName.asString())
+
+            makeBaseBlockEntity(resolver, codeGenerator, logger, type, abstractBlockName, itemCount, guiInfo)
+            makeScreenHandler(resolver, codeGenerator, logger, type, itemCount, guiName.asString(), guiInfo)
+            makeScreen(resolver, codeGenerator, logger, type, guiName.asString(), guiInfo)
 
             deferred.add(type)
         }
@@ -129,6 +139,10 @@ class BlockAsContainer: Generator {
         }) return
 
         logger.error("BlockAsContainer requires the inheritance of $abstractClassName", type)
+    }
+
+    private fun collectGUIInfo(gui: KSClassDeclaration, logger: KSPLogger): GUIInfo? {
+        return parseGUIInfo(gui, logger)
     }
 
     private fun checkTypePrimaryCtorForBlockSettings(type: KSClassDeclaration): Boolean {
@@ -164,6 +178,8 @@ class BlockAsContainer: Generator {
 
         val abstractClassName = abstractNameGen(className)
 
+        val screenHandlerName = screenHandlerNameGen(className)
+
         val src = KGen.Source(packageName, abstractClassName).mcImportForBlocks() maker
                 KGen.Class(abstractClassName).apply {
                     this abstract true
@@ -183,15 +199,15 @@ class BlockAsContainer: Generator {
                                     "Registry.register(Registry.BLOCK, $qualifiedName.ID, self)\n" +
                                     "Registry.register(Registry.ITEM, $qualifiedName.ID, BlockItem(self, FabricItemSettings().group(ItemGroup.BREWING)))\n"
                                 } else ""}
-                                ContainerProviderImpl.INSTANCE.registerFactory($qualifiedName.ID) { syncId, _, player, _ ->
-                                    ${screenHandlerNameGen(className)}(syncId, player.inventory)
+                                ContainerProviderImpl.INSTANCE.registerFactory($qualifiedName.ID) { syncId, _, player, buf ->
+                                    ${screenHandlerNameGen(className)}(syncId, player.inventory, buf)
                                 }
                             """.trimIndent())
                         }
 
                         this with KGen.Fun("initClient").apply {
                             body("""
-                                ScreenRegistry.register(null!!, ::${screenNameGen(className)})
+                                ScreenRegistry.register($screenHandlerName.SCREEN_HANDLER, ::${screenNameGen(className)})
                             """.trimIndent())
                         }
                     }
@@ -222,21 +238,21 @@ class BlockAsContainer: Generator {
                     }
 
                     this with KGen.Fun.override("onUse").apply {
-                        this with KGen.Param("state", "BlockState")
-                        this with KGen.Param("world", "World")
-                        this with KGen.Param("pos", "BlockPos")
-                        this with KGen.Param("player", "PlayerEntity")
-                        this with KGen.Param("hand", "Hand")
-                        this with KGen.Param("hit", "BlockHitResult")
+                        this with KGen.Param("state", "BlockState?")
+                        this with KGen.Param("world", "World?")
+                        this with KGen.Param("pos", "BlockPos?")
+                        this with KGen.Param("player", "PlayerEntity?")
+                        this with KGen.Param("hand", "Hand?")
+                        this with KGen.Param("hit", "BlockHitResult?")
                         this returns "ActionResult"
                         body("""
-                            if (world!!.isClient) {
+                            if (world == null || world.isClient || player == null) {
                                 return ActionResult.SUCCESS
                             }
                             
                             val screenHandlerFactory = state!!.createScreenHandlerFactory(world, pos)
                             player.openHandledScreen(screenHandlerFactory)
-                            return ActionResult.CONSUME
+                            return ActionResult.SUCCESS
                         """.trimIndent())
                     }
 
@@ -354,18 +370,27 @@ class BlockAsContainer: Generator {
         codeGenerator.addCode(src)
     }
 
-    private fun makeBaseBlockEntity(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, type: KSClassDeclaration, abstractBlockName: String, itemCount: Int) {
+    private fun makeBaseBlockEntity(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, type: KSClassDeclaration, abstractBlockName: String, itemCount: Int, guiInfo: GUIInfo) {
         val packageName = type.packageName.asString()
         val className = type.simpleName.asString()
         val qualifiedName = type.qualifiedName?.asString() ?: return
 
         val blockEntityName = baseEntityBlockNameGen(className)
 
+        val guiStateInfo = guiInfo.state
+
         val src = KGen.Source(packageName, blockEntityName).mcImportForBlockEntities() maker
                 KGen.Class(blockEntityName).apply {
                     this inherits KGen.Class.Inherits("BlockEntity", "TYPE")
                     this inherits KGen.Class.Inherits(inventoryNameGen(className))
-                    this inherits KGen.Class.Inherits("NamedScreenHandlerFactory")
+                    this inherits KGen.Class.Inherits("ExtendedScreenHandlerFactory")
+
+                    val hasTick = guiInfo.hasEvent(GUIEvent.Tick) || guiInfo.hasEvent(GUIEvent.TickWithInfo)
+
+                    if(hasTick) {
+                        this inherits KGen.Class.Inherits("net.minecraft.util.Tickable")
+                    }
+
                     this with KGen.Class.CompanionObject().apply {
                         this with KGen.Field("TYPE", "BlockEntityType<$blockEntityName>", "BlockEntityType.Builder.create(::$blockEntityName, $abstractBlockName.self).build(null)")
 
@@ -374,6 +399,10 @@ class BlockAsContainer: Generator {
                                 Registry.register(Registry.BLOCK_ENTITY_TYPE, $qualifiedName.ID, TYPE)
                             """.trimIndent())
                         }
+                    }
+
+                    if(guiStateInfo != null) {
+                        this with KGen.Field("state", guiStateInfo.qualifiedName, "${guiStateInfo.qualifiedName}()").private()
                     }
 
                     this with KGen.Field("items", "", "DefaultedList.ofSize($itemCount, ItemStack.EMPTY)").private()
@@ -450,12 +479,84 @@ class BlockAsContainer: Generator {
                         this returns "Text"
                         body("return ${abstractBlockName}.self.name")
                     }
+
+                    val stateHandling = if(guiStateInfo != null) {
+                        """
+                                val entityId = pos.asLong()
+                                buf.writeLong(entityId)
+                                ${guiStateInfo.properties.map { prop ->
+                            "buf.${prop.bufWriter}(state.${prop.name})"
+                        }.joinToString("\n")}
+                            """.trimIndent()
+                    } else ""
+
+                    this with KGen.Fun.override("writeScreenOpeningData").apply {
+                        this with KGen.Param("serverPlayerEntity", "ServerPlayerEntity?")
+                        this with KGen.Param("buf", "PacketByteBuf?")
+
+                        body("""
+                            if(serverPlayerEntity == null || buf == null) {
+                                return
+                            }
+                            $stateHandling
+                        """.trimIndent())
+                    }
+
+                    this with KGen.Fun("sendGUIStateUpdates").apply {
+                        this body """
+                            val globalId = nipah.minecraft.ui.lib.NipahUIModInitializer.GlobalId
+                            
+                            val world = world ?: return
+
+                            if(world.isClient) {
+                                return
+                            }
+                    
+                            val players = world.players
+                    
+                            val buf = PacketByteBufs.create()
+                            
+                            $stateHandling
+                            
+                            players.forEach {
+                                ServerPlayNetworking.send(it as ServerPlayerEntity, globalId, buf)
+                            }
+                        """.trimIndent()
+                    }
+
+                    if(hasTick) {
+                        this with KGen.Fun.override("tick").apply {
+                            body("""
+                                if(world!!.isClient) {
+                                    return
+                                }
+                                if(world!!.time % 20 == 0L) {
+                                    markDirty()
+                                }
+                                val gui = ${guiInfo.qualifiedName}()
+                                gui.state = state
+                                ${if(guiInfo.hasEvent(GUIEvent.Tick)) {
+                                    """
+                                        if(gui.tick()) {
+                                            sendGUIStateUpdates()
+                                        }
+                                    """.trimIndent()
+                                }else {
+                                    """
+                                        if(gui.tick(world!!, pos)) {
+                                            sendGUIStateUpdates()
+                                        }
+                                    """.trimIndent()
+                                }}
+                            """.trimIndent())
+                        }
+                    }
                 }
 
         codeGenerator.addCode(src)
     }
 
-    private fun makeScreenHandler(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, type: KSClassDeclaration, itemsCount: Int, gui: String) {
+    private fun makeScreenHandler(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, type: KSClassDeclaration, itemsCount: Int, gui: String, guiInfo: GUIInfo) {
         val packageName = type.packageName.asString()
         val className = type.simpleName.asString()
         val qualifiedName = type.qualifiedName?.asString() ?: return
@@ -464,16 +565,19 @@ class BlockAsContainer: Generator {
 
         val inventoryName = inventoryNameGen(className)
 
+        val guiStateInfo = guiInfo.state
+
         val src = KGen.Source(packageName, screenHandlerName).mcImportForScreenHandlers() maker
                 KGen.Class(screenHandlerName).apply {
                     this inherits KGen.Class.Inherits("ScreenHandler")
+                    this inherits KGen.Class.Inherits("NipahUIScreenHandler")
 
                     this with KGen.Class.CompanionObject().apply {
                         this with KGen.Field("SCREEN_HANDLER", "ScreenHandlerType<$screenHandlerName>").lateInit()
 
                         this with KGen.Fun("init").apply {
                             body("""
-                                SCREEN_HANDLER = ScreenHandlerRegistry.registerSimple(
+                                SCREEN_HANDLER = ScreenHandlerRegistry.registerExtended(
                                     $qualifiedName.ID,
                                     ::$screenHandlerName
                                 )
@@ -481,12 +585,44 @@ class BlockAsContainer: Generator {
                         }
                     }
 
+                    this with KGen.Field("entityId", "Long", "0").override().asVar()
+
+                    if(guiStateInfo != null) {
+                        this with KGen.Field("state", guiStateInfo.qualifiedName, "${guiStateInfo.qualifiedName}()")
+                    }
+
                     this with KGen.Field("inventory", "Inventory").private()
+
+                    val stateReading = if(guiStateInfo != null) {
+                        """
+                        ${
+                            guiStateInfo.properties.joinToString("\n") { prop ->
+                                """
+                                    state.${prop.name} = buf.${prop.bufReader}()
+                                """
+                            }
+                        }
+                        """.trimIndent()
+                    } else ""
+
+                    this with KGen.Fun.override("updateState").apply {
+                        this with KGen.Param("buf", "PacketByteBuf")
+                        body("""
+                            $stateReading
+                        """.trimIndent())
+                    }
 
                     this with KGen.Constructor().apply {
                         this with KGen.Param("syncId", "Int")
                         this with KGen.Param("playerInventory", "PlayerInventory")
+                        this with KGen.Param("buf", "net.minecraft.network.PacketByteBuf")
                         this calling "this(syncId, playerInventory, SimpleInventory($itemsCount))"
+                        if(guiStateInfo != null) {
+                            this body """
+                                entityId = buf.readLong()
+                                $stateReading
+                            """.trimIndent()
+                        }
                     }
 
                     this with KGen.Constructor().apply {
@@ -552,7 +688,9 @@ class BlockAsContainer: Generator {
         codeGenerator.addCode(src)
     }
 
-    private fun makeScreen(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, type: KSClassDeclaration, gui: String) {
+    private fun importLib(name: String) = "nipah.minecraft.ui.lib.$name"
+
+    private fun makeScreen(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger, type: KSClassDeclaration, gui: String, guiInfo: GUIInfo) {
         val packageName = type.packageName.asString()
         val className = type.simpleName.asString()
         val qualifiedName = type.qualifiedName?.asString() ?: return
@@ -561,7 +699,12 @@ class BlockAsContainer: Generator {
 
         val screenName = screenNameGen(className)
 
-        val src = KGen.Source(packageName, screenName).mcImportForScreens() maker
+        val guiStateInfo = guiInfo.state
+
+        val src = KGen.Source(packageName, screenName).mcImportForScreens() import
+                importLib("ContainerGUI") import
+                importLib("ScreenWrapper") import
+                importLib("WrappedProperty") maker
                 KGen.Class(screenName).apply {
                     this with KGen.PrimaryConstructor().apply {
                         this with KGen.Param("handler", screenHandlerName)
@@ -584,7 +727,7 @@ class BlockAsContainer: Generator {
                             title,
                             WrappedProperty({ titleX }, { titleX = it }),
                             WrappedProperty({ titleY }, { titleY = it }),
-                            textRenderer,
+                            WrappedProperty({ textRenderer }, { textRenderer = it }),
                             
                             ::drawTexture,
                             ::drawTextWithShadow,
@@ -596,6 +739,9 @@ class BlockAsContainer: Generator {
                         body("""
                             super.init()
                             titleX = (backgroundWidth - textRenderer.getWidth(title)) / 2;
+                            ${if(guiStateInfo != null) {
+                                "gui.state = handler.state\n"
+                            } else ""}
                             container = gui.makeScreen()
                         """.trimIndent())
                     }
@@ -618,6 +764,9 @@ class BlockAsContainer: Generator {
                         this with KGen.Param("mouseX", "Int")
                         this with KGen.Param("mouseY", "Int")
                         body("""
+                            ${if(guiInfo.hasEvent(GUIEvent.Render)) {
+                                "gui.render(container)\n"
+                            } else ""}
                             container.drawBackground(matrices, delta, mouseX, mouseY, wrapper)
                         """.trimIndent())
                     }
@@ -629,6 +778,9 @@ class BlockAsContainer: Generator {
     private fun makeInitializers(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger) {
         val src = KGen.Source("nipah.minecraft.ui.lib", "NipahUIModInitializer") maker
                 KGen.Singleton("NipahUIModInitializer").apply {
+                    val uuid = UUID.randomUUID().toString()
+                    this with KGen.Field("GlobalId", "", "net.minecraft.util.Identifier(\"nipah-ui-lib\", \"$uuid\")")
+
                     this with KGen.Fun("init").apply {
                         body("""
                         ${sources.map { src ->
@@ -656,9 +808,39 @@ class BlockAsContainer: Generator {
                                 ${abstractNameGen(className)}.initClient()
                             """.trimIndent()
                         }.joinToString()}
+                        
+                        // GUIs
+                        net.fabricmc.fabric.impl.networking.ClientSidePacketRegistryImpl.INSTANCE.register(
+                            GlobalId
+                        ) { ctx: net.fabricmc.fabric.api.network.PacketContext, buf: net.minecraft.network.PacketByteBuf ->
+                            buf.retain()
+                            val entityId = buf.readLong()
+                            ctx.taskQueue.execute {
+                                val screen: net.minecraft.client.gui.screen.Screen? = net.minecraft.client.MinecraftClient.getInstance().currentScreen
+                                if (screen is net.minecraft.client.gui.screen.ingame.HandledScreen<*>) {
+                                    val handler = screen.getScreenHandler()
+
+                                    if(handler !is NipahUIScreenHandler) {
+                                        return@execute
+                                    }
+
+                                    if (handler.entityId == entityId) {
+                                        handler.updateState(buf)
+                                    }
+                                }
+                                buf.release()
+                            }
+                        }
                         """.trimIndent())
                     }
                 }
+
+        sources.forEach {
+            val (type, _) = it
+            val packageName = type.packageName.asString()
+
+            src import "$packageName.*"
+        }
 
         codeGenerator.addCode(src)
     }

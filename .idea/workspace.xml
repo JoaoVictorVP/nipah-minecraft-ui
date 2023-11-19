@@ -4,9 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64f5dfc9-3bcf-4fa7-b698-e8c7c3ef6d12" name="Changes" comment="well...">
+    <list default="true" id="64f5dfc9-3bcf-4fa7-b698-e8c7c3ef6d12" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/generators/utils/GUIStateUtils.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nipah-minecraft-ui-lib/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/CodeGenerationUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/CodeGenerationUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/KGen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/KGen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/MinecraftSpecifics.kt" beforeDir="false" afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/MinecraftSpecifics.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/generators/BlockAsContainer.kt" beforeDir="false" afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/generators/BlockAsContainer.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/generators/LibGenerator.kt" beforeDir="false" afterPath="$PROJECT_DIR$/nipah-minecraft-ui-lib/src/main/kotlin/nipah/minecraft/ui/ksp/generators/LibGenerator.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,13 +23,51 @@
       <ProjectState />
     </projectState>
   </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$/nipah-minecraft-ui-lib">
+          <activation />
+        </task>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="nipah-minecraft-ui" type="f1a62948:ProjectNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="nipah-minecraft-ui" type="f1a62948:ProjectNode" />
+                <item name="nipah-minecraft-ui-lib" type="2d1252cf:ModuleNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="nipah-minecraft-ui" type="f1a62948:ProjectNode" />
+                <item name="nipah-minecraft-ui-lib" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="nipah-minecraft-ui" type="f1a62948:ProjectNode" />
+                <item name="nipah-minecraft-ui-lib" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="publishing" type="c8890929:TasksNode$1" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Kotlin File" />
         <option value="Kotlin Annotation" />
         <option value="Kotlin Interface" />
         <option value="Kotlin Class" />
+        <option value="Kotlin File" />
       </list>
     </option>
   </component>
@@ -81,6 +124,34 @@
       <recent name="generators" />
       <recent name="annotations" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="nipah-minecraft-ui:nipah-minecraft-ui-lib [publishToMavenLocal]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/nipah-minecraft-ui-lib" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="publishToMavenLocal" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Gradle.nipah-minecraft-ui:nipah-minecraft-ui-lib [publishToMavenLocal]" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -175,7 +246,14 @@
       <option name="project" value="LOCAL" />
       <updated>1700135558719</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="last publish of the day, here I go">
+      <created>1700135985556</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1700135985556</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -201,7 +279,9 @@
     <MESSAGE value="testing" />
     <MESSAGE value="publishing" />
     <MESSAGE value="well..." />
-    <option name="LAST_COMMIT_MESSAGE" value="well..." />
+    <MESSAGE value="last publish of the day, here I go..." />
+    <MESSAGE value="last publish of the day, here I go" />
+    <option name="LAST_COMMIT_MESSAGE" value="last publish of the day, here I go" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

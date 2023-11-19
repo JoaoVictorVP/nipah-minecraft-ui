@@ -47,17 +47,23 @@ fun KGen.Source.mcImportForBlockEntities(): KGen.Source {
     this import "net.minecraft.inventory.Inventories"
     this import "net.minecraft.item.ItemStack"
     this import "net.minecraft.nbt.NbtCompound"
-    this import "net.minecraft.screen.NamedScreenHandlerFactory"
+    this import "net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory"
     this import "net.minecraft.screen.ScreenHandler"
     this import "net.minecraft.text.Text"
     this import "net.minecraft.util.collection.DefaultedList"
     this import "net.minecraft.util.math.Direction"
     this import "net.minecraft.util.registry.Registry"
 
+    this import "net.minecraft.network.PacketByteBuf"
+    this import "net.minecraft.server.network.ServerPlayerEntity"
+    this import "net.fabricmc.fabric.api.networking.v1.PacketByteBufs"
+    this import "net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking"
+
     return this
 }
 
 fun KGen.Source.mcImportForScreenHandlers(): KGen.Source {
+    this import "nipah.minecraft.ui.lib.NipahUIScreenHandler"
     this import "net.minecraft.entity.player.PlayerEntity"
     this import "net.minecraft.entity.player.PlayerInventory"
     this import "net.minecraft.inventory.Inventory"
@@ -67,6 +73,7 @@ fun KGen.Source.mcImportForScreenHandlers(): KGen.Source {
     this import "net.minecraft.screen.slot.Slot"
     this import "net.minecraft.screen.ScreenHandlerType"
     this import "net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry"
+    this import "net.minecraft.network.PacketByteBuf"
 
     return this
 }
