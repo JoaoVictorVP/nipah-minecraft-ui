@@ -37,6 +37,10 @@ class BlockAsContainer: Generator {
     }
 
     override fun run(resolver: Resolver, codeGenerator: CodeGenerator, logger: KSPLogger): List<KSAnnotated> {
+        if(sources.isEmpty()) {
+            return emptyList()
+        }
+
         if(deferred.isNotEmpty()) {
             deferred.forEach {
                 checkInheritance(it, logger)
@@ -106,10 +110,7 @@ class BlockAsContainer: Generator {
                 logger.error("BlockAsContainer requires the existence of a gui class", type)
                 return@forEach
             }
-            val guiInfo = collectGUIInfo(gui, logger)
-            if(guiInfo == null) {
-                return@forEach
-            }
+            val guiInfo = collectGUIInfo(gui, logger) ?: return@forEach
 
             val autoRegisterBlock = annotation.arguments.find { it.name?.asString() == "autoRegisterBlock" }?.value as? Boolean ?: true
 
@@ -123,7 +124,11 @@ class BlockAsContainer: Generator {
             deferred.add(type)
         }
 
-        makeInitializers(resolver, codeGenerator, logger)
+        try {
+            makeInitializers(resolver, codeGenerator, logger)
+        } catch(_: Error) {
+            return emptyList()
+        }
 
         return deferred
     }
